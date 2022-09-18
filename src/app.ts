@@ -31,6 +31,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement
   hostElement: HTMLDivElement
   element: HTMLElement
+  assignedProjects: any[]
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.querySelector('#project-list')!
@@ -43,7 +44,20 @@ class ProjectList {
     this.element.querySelector(
       'h2'
     )!.textContent = `${this.type.toUpperCase()} PROJECTS`
+    this.assignedProjects = []
+    projectState.addListener((projects: any[]) => {
+      this.assignedProjects = projects
+      this.renderProjects()
+    })
     this.attach()
+  }
+  private renderProjects() {
+    const ul = document.getElementById(`${this.type}-projects-list`)
+    for (const p of this.assignedProjects) {
+      const li = document.createElement('li')
+      li.textContent = p.title
+      ul?.appendChild(li)
+    }
   }
   private attach() {
     this.hostElement.insertAdjacentElement('beforeend', this.element)
@@ -117,7 +131,8 @@ class ProjectInput {
     e.preventDefault()
     const userInput = this.getInputs()
     if (Array.isArray(userInput)) {
-      console.log(userInput)
+      const [title, description, people] = userInput
+      projectState.addProject(title, description, people)
       this.clearInputs()
     }
   }
@@ -131,6 +146,7 @@ class ProjectInput {
  * the unique singleton instance.
  */
 class ProjectState {
+  private listeners: any[] = []
   private projects: any[] = []
   private static instance: ProjectState
 
@@ -143,6 +159,10 @@ class ProjectState {
     return this.instance
   }
 
+  addListener(listenerFn: Function) {
+    this.listeners.push(listenerFn)
+  }
+
   addProject(title: string, description: string, numOfPeople: number) {
     this.projects.push({
       id: new Date().getTime().toString(),
@@ -150,9 +170,13 @@ class ProjectState {
       description,
       people: numOfPeople,
     })
+    for (const l of this.listeners) {
+      l(this.projects.slice())
+    }
   }
 }
 const projectState = ProjectState.getInstance()
 const project = new ProjectInput()
 const activeList = new ProjectList('active')
 const finishedList = new ProjectList('finished')
+console.log(projectState)
