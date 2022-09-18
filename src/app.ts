@@ -127,11 +127,21 @@ class ProjectInput {
   }
 }
 /**
- * The Singleton class defines the `getInstance` method that lets clients access
+ * The class defines the `getInstance` method that lets clients access
  * the unique singleton instance.
  */
 class ProjectState {
   private projects: any[] = []
+  private static instance: ProjectState
+
+  private constructor() {}
+
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new ProjectState()
+    }
+    return this.instance
+  }
 
   addProject(title: string, description: string, numOfPeople: number) {
     this.projects.push({
@@ -142,8 +152,7 @@ class ProjectState {
     })
   }
 }
-const projectState = new ProjectState()
+const projectState = ProjectState.getInstance()
 const project = new ProjectInput()
 const activeList = new ProjectList('active')
 const finishedList = new ProjectList('finished')
-console.log(new Date().getTime())
